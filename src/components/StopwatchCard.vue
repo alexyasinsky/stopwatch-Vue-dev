@@ -24,25 +24,32 @@
   import ControlsBlock from "./ControlsBlock.vue";
   import {computed, ref} from "vue";
 
+
   const counter = ref(0);
   const counterStatus= ref('inactive');
-  const counterId = ref(0);
+  const step = 1000;
+  let counterWebWorker;
 
   function playCounter() {
     counterStatus.value = 'active';
-    counterId.value = setInterval(()=>{
-      return counter.value++;
-    }, 1000)
+    counterWebWorker = new Worker('src/services/counter-web-worker.js');
+    counterWebWorker.postMessage({
+      counter: counter.value,
+      step: step
+    });
+    counterWebWorker.onmessage = e => counter.value = e.data;
   }
 
   function pauseCounter() {
     counterStatus.value = 'inactive';
-    clearInterval(counterId.value);
+    counterWebWorker.terminate();
+    counterWebWorker = undefined;
   }
 
   function stopCounter() {
     counterStatus.value = 'inactive';
-    clearInterval(counterId.value);
+    counterWebWorker.terminate();
+    counterWebWorker = undefined;
     counter.value = 0;
   }
 
